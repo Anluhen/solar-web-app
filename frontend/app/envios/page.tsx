@@ -2,7 +2,9 @@ export const dynamic = 'force-dynamic';
 
 type Envio = {
   id: number;
-  codigo: string;
+  pep: string;
+  zvgp: string;
+  gerador: string;
   status: 'RASCUNHO' | 'ENVIADO' | 'CANCELADO';
   observacoes: string | null;
   created_at: string;
@@ -45,7 +47,10 @@ export default async function EnviosPage() {
         </thead>
         <tbody>
           {envios.map((e) => (
-            <tr key={e.id} className="odd:bg-white even:bg-gray-50">
+            <tr
+              key={e.id}
+              className="odd:bg-white even:bg-gray-50"
+            >
               <td className="p-2 border">{e.id}</td>
               <td className="p-2 border">{e.pep}</td>
               <td className="p-2 border">{e.zvgp}</td>
