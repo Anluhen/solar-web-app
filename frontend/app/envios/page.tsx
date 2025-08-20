@@ -1,15 +1,6 @@
 export const dynamic = 'force-dynamic';
-
-type Envio = {
-  id: number;
-  pep: string;
-  zvgp: string;
-  gerador: string;
-  status: 'RASCUNHO' | 'ENVIADO' | 'CANCELADO';
-  observacoes: string | null;
-  created_at: string;
-  updated_at: string;
-};
+import type { Envio } from '@/envios/types/envio';
+import EnvioRow from '@/envios/components/EnvioRow'
 
 async function getEnvios(): Promise<Envio[]> {
   const url = `${process.env.NEXT_PUBLIC_API_URL}/envios`;
@@ -28,41 +19,47 @@ async function getEnvios(): Promise<Envio[]> {
 
 export default async function EnviosPage() {
   const envios = await getEnvios();
-  
+
+  // Convert timezone to avoid hydration error
+  const fmt = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    dateStyle: 'short',
+    timeStyle: 'short',
+  });
+
+  const rows = envios.map(e => ({
+    ...e,
+    created_at_fmt: fmt.format(new Date(e.created_at)),
+    updated_at_fmt: fmt.format(new Date(e.updated_at)),
+  }));
+
   return (
-    <div className="max-w-8/10 p-8">
-      <h1 className="pb-4 text-2xl font-bold">Envios</h1>
-      <table className="w'-full border border-gray-200 shadow-md">
-        <thead className="bg-gray-200 uppercase">
-          <tr>
-            <th className="p-2 text-left border">ID</th>
-            <th className="p-2 text-left border">PEP</th>
-            <th className="p-2 text-left border">ZVGP</th>
-            <th className="p-2 text-left border">Gerador</th>
-            <th className="p-2 text-left border">Status</th>
-            <th className="p-2 text-left border">Observações</th>
-            <th className="p-2 text-left border">Criado</th>
-            <th className="p-2 text-left border">Atualizado</th>
-          </tr>
-        </thead>
-        <tbody>
-          {envios.map((e) => (
-            <tr
-              key={e.id}
-              className="odd:bg-white even:bg-gray-50"
-            >
-              <td className="p-2 border">{e.id}</td>
-              <td className="p-2 border">{e.pep}</td>
-              <td className="p-2 border">{e.zvgp}</td>
-              <td className="p-2 border">{e.gerador}</td>
-              <td className="p-2 border">{e.status}</td>
-              <td className="p-2 border">{e.observacoes ?? '-'}</td>
-              <td className="p-2 border">{new Date(e.created_at).toLocaleString()}</td>
-              <td className="p-2 border">{new Date(e.updated_at).toLocaleString()}</td>
+    <div className="max-w-8/10 m-auto">
+      <h1 className="pb-4 pt-4 text-2xl font-bold">Envios</h1>
+      <div className='rounded-xl max-h-[calc(100vh-var(--spacing)*16)] overflow-y-auto'>
+        <table className="w-full border border-gray-200 shadow-md">
+          <thead className="sticky top-0 text-sm uppercase bg-gray-200">
+            <tr>
+              <th className="p-2 text-left">ID</th>
+              <th className="p-2 text-left">PEP</th>
+              <th className="p-2 text-left">ZVGP</th>
+              <th className="p-2 text-left">Gerador</th>
+              <th className="p-2 text-left">Status</th>
+              {/* <th className="p-2 text-left border border-gray-400">Observações</th> */}
+              {/* <th className="p-2 text-left border border-gray-400">Criado</th> */}
+              {/* <th className="p-2 text-left border border-gray-400">Atualizado</th> */}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className='text-sm'>
+            {rows.map((e) => (
+              <EnvioRow
+                key={e.id}
+                envio={e}
+              />
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
