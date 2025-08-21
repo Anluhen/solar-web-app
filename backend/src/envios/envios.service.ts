@@ -31,10 +31,11 @@ export class EnviosService {
 
   async get(id: number): Promise<Envio | null> {
     const { rows } = await this.pool.query(
-      `SELECT id, codigo, status, observacoes, 
-              to_char(created_at, 'YYYY-MM-DD"T"HH24:MI:SSZ') as created_at,
-              to_char(updated_at, 'YYYY-MM-DD"T"HH24:MI:SSZ') as updated_at
-       FROM envios WHERE id = $1`,
+      `SELECT id, pep, zvgp, gerador, observacoes,  status,
+             to_char(created_at, 'YYYY-MM-DD"T"HH24:MI:SSZ') as created_at,
+             to_char(updated_at, 'YYYY-MM-DD"T"HH24:MI:SSZ') as updated_at
+      FROM envios
+      WHERE id = $1`,
       [id],
     );
     return rows[0] ?? null;
