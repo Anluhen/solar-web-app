@@ -8,6 +8,7 @@ interface InputFieldProps {
   value: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   readOnly?: boolean;
+  className?: string;
 }
 
 function InputField({
@@ -16,9 +17,10 @@ function InputField({
   value,
   onChange,
   readOnly,
+  className = '',
 }: InputFieldProps) {
   return (
-    <div className="flex flex-col">
+    <div className={`flex flex-col ${className}`}>
       <label className="text-sm font-medium mb-1 text-gray-700">
         {label}
       </label>
@@ -26,7 +28,7 @@ function InputField({
         id={name}
         name={name}
         type="text"
-        className="border border-gray-200 rounded b"
+        className="border border-gray-200 rounded p-1"
         value={value}
         onChange={onChange}
         readOnly={readOnly}
@@ -92,55 +94,72 @@ export default function EnvioForm({ envio }: { envio: Envio }) {
   }
   
   return (
-    <form onSubmit={onSubmit} className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6 bg-white p-4 rounded shadow">
+    <form
+      onSubmit={onSubmit}
+      className="grid grid-cols-1 sm:grid-cols-12 gap-4 mb-6 bg-white p-4 rounded shadow">
       <InputField
         name= "id"
         label="ID"
         value={form.id}
         readOnly
+        className='sm:col-span-2'
       />
       <InputField
         name="pep"
         label="PEP"
         value={form.pep}
         onChange={handleChange}
+        className='sm:col-span-3'
       />
       <InputField
         name="zvgp"
         label="ZVGP"
         value={form.zvgp}
         onChange={handleChange}
+        className='sm:col-span-2'
       />
       <InputField
         name="gerador"
         label="Gerador"
         value={form.gerador}
         onChange={handleChange}
+        className='sm:col-span-2'
       />
       <InputField
         name="status"
         label="Status"
         value={form.status}
         onChange={handleChange}
-      />
-      <InputField
-        name="observacoes"
-        label="Observações"
-        value={form.observacoes}
-        onChange={handleChange}
+        className='sm:col-span-3'
       />
       <InputField
         name="created_at"
         label="Criado em"
         value={form.created_at}
         onChange={handleChange}
+        readOnly
+        className='sm:col-span-4'
       />
       <InputField
         name="updated_at"
         label="Atualizado em"
         value={form.updated_at}
         onChange={handleChange}
+        readOnly
+        className='sm:col-span-4'
       />
+      <div className="flex flex-col sm:col-span-12">
+        <label className="text-sm font-medium mb-1 text-gray-700">
+          Observações
+        </label>
+        <textarea
+          id="observacoes"
+          name="observacoes"
+          className="border border-gray-200 rounded p-1"
+          value={form.observacoes}
+          onChange={handleChange}
+        />
+      </div>
       <div className="col-span-full">
         <button
           type="submit"
