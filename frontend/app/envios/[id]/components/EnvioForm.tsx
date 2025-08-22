@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react';
 import type { Envio } from '@/envios/types/envio';
+import { useRouter } from 'next/navigation';
 
 interface InputFieldProps {
   name: string;
@@ -37,16 +38,24 @@ function InputField({
   );
 }
 
-export default function EnvioForm({ envio }: { envio: Envio }) {
+export default function EnvioForm({
+  envio,
+  isNew = false
+}: {
+  envio?: Envio;
+  isNew?: boolean;
+}) {
+  const router = useRouter();
+
   const [form, setForm] = useState({
-    id: String(envio.id ?? ''),
-    pep: String(envio.pep ?? ''),
-    zvgp: String(envio.zvgp ?? ''),
-    gerador: String(envio.gerador ?? ''),
-    observacoes: String(envio.observacoes ?? ''),
-    status: String(envio.status ?? ''),
-    created_at: String(envio.created_at ?? ''),
-    updated_at: String(envio.updated_at ?? ''),
+    id: String(envio?.id ?? ''),
+    pep: String(envio?.pep ?? ''),
+    zvgp: String(envio?.zvgp ?? ''),
+    gerador: String(envio?.gerador ?? ''),
+    observacoes: String(envio?.observacoes ?? ''),
+    status: String(envio?.status ?? ''),
+    created_at: String(envio?.created_at ?? ''),
+    updated_at: String(envio?.updated_at ?? ''),
   });
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -54,7 +63,7 @@ export default function EnvioForm({ envio }: { envio: Envio }) {
     const fd = new FormData(e.currentTarget);
 
     // Build the payload from form values
-    const payload:any = {
+    const payload: any = {
       id: fd.get('id'),                          // immutable, but send if your API wants it
       pep: fd.get('pep') || undefined,
       zvgp: fd.get('zvgp') || undefined,
@@ -65,8 +74,14 @@ export default function EnvioForm({ envio }: { envio: Envio }) {
 
     Object.keys(payload).forEach((k) => payload[k] === undefined && delete payload[k]);
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/envios/${payload.id}`, {
-      method: 'PUT',
+    const url = isNew
+      ? `${process.env.NEXT_PUBLIC_API_URL}/envios`
+      : `${process.env.NEXT_PUBLIC_API_URL}/envios/${payload.id}`;
+
+    if (isNew) delete payload.id;
+
+    const res = await fetch(url, {
+      method: isNew ? 'POST' : 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
       cache: 'no-store',
@@ -78,27 +93,32 @@ export default function EnvioForm({ envio }: { envio: Envio }) {
       return;
     }
 
-    const updated = await res.json();
+    const saved = await res.json();
 
     setForm((f) => ({
       ...f,
-      ...updated,
+      ...saved,
+      id: String(saved.id ?? f.id ?? ''),
+      created_at: String(saved.created_at ?? f.created_at ?? ''),
+      updated_at: String(saved.updated_at ?? f.updated_at ?? ''),
     }));
 
-    // alert('Salvo com sucesso!');
+    if (isNew && saved?.id) {
+      router.replace(`/envios/${saved.id}`);
+    }
   }
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
   }
-  
+
   return (
     <form
       onSubmit={onSubmit}
       className="grid grid-cols-1 sm:grid-cols-12 gap-4 mb-6 bg-white p-4 rounded shadow">
       <InputField
-        name= "id"
+        name="id"
         label="ID"
         value={form.id}
         readOnly
@@ -125,13 +145,23 @@ export default function EnvioForm({ envio }: { envio: Envio }) {
         onChange={handleChange}
         className='sm:col-span-2'
       />
-      <InputField
-        name="status"
-        label="Status"
-        value={form.status}
-        onChange={handleChange}
-        className='sm:col-span-3'
-      />
+      <div className="flex flex-col sm:col-span-3">
+        <label className="text-sm font-medium mb-1 text-gray-700">
+          Status
+        </label>
+        <select
+          name="status"
+          value={isNew ? "RASCUNHO" : form.status}
+          disabled={isNew}
+          onChange={handleChange}
+          className="border border-gray-200 rounded p-1"
+        >
+          <option value="">Selecione</option>
+          <option value="RASCUNHO">RASCUNHO</option>
+          <option value="ENVIADO">ENVIADO</option>
+          <option value="CANCELADO">CANCELADO</option>
+        </select>
+      </div>
       <InputField
         name="created_at"
         label="Criado em"

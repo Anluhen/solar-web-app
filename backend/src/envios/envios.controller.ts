@@ -5,11 +5,12 @@ import {
   Param,
   ParseIntPipe,
   Put,
+  Post,
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
 import { EnviosService } from './envios.service';
-import type { UpdateEnvioDto } from './envios.service';
+import type { UpdateEnvioDto, CreateEnvioDto } from './envios.service';
 
 @Controller('envios')
 export class EnviosController {
@@ -18,6 +19,11 @@ export class EnviosController {
   @Get()
   async list() {
     return await this.service.list();
+  }
+
+  @Post()
+  async create(@Body() dto: CreateEnvioDto) {
+    return this.service.create(dto);
   }
 
   @Get(':id')
@@ -32,9 +38,6 @@ export class EnviosController {
   @Get(':id/materiais')
   async getMateriais(@Param('id', ParseIntPipe) id: number) {
     const materiais = await this.service.getMateriais(id);
-    if (!materiais?.length) {
-      throw new NotFoundException('Materials not found');
-    }
     return materiais;
   }
 

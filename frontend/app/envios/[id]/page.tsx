@@ -34,8 +34,10 @@ async function getMateriais(id: string): Promise<Materiais> {
 }
 
 export default async function EnvioPage({ params }: { params: { id: string } }) {
-  const envio = await getEnvio(params.id);
-  const materiais = await getMateriais(params.id);
+  const isNew = params.id === 'new';
+
+  const envio = isNew ? undefined : await getEnvio(params.id);
+  const materiais = isNew ? undefined : await getMateriais(params.id);
 
   return (
     <div className='p-4 w-screen m-auto'>
@@ -47,21 +49,26 @@ export default async function EnvioPage({ params }: { params: { id: string } }) 
           Retornar
         </Link>
       </div>
-      <h1 className="p-4 text-2xl font-bold">Envio - {envio.id} - {envio.pep}</h1>
+      <h1 className="p-4 text-2xl font-bold">{isNew ? 'Novo Envio' : <>Envio - {envio!.id} - {envio!.pep}</>}</h1>
       <div className='p-4'>
         <EnvioForm
-          key={envio.id}
+          key={isNew ? 'new' : envio!.id}
           envio={envio}
+          isNew={isNew}
         />
       </div>
-      <h1 className="p-4 text-2xl font-bold">Materiais</h1>
-      <div className='p-4'>
-        <MateriaisTable
-          key={envio.id}
-          materiais={materiais}
-          envioId={envio.id}
-        />
-      </div>
+      {!isNew && (
+        <>
+          <h1 className="p-4 text-2xl font-bold">Materiais</h1>
+          <div className='p-4'>
+            <MateriaisTable
+              key={envio!.id}
+              materiais={materiais!}
+              envioId={envio!.id}
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 }

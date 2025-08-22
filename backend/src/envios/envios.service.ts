@@ -30,6 +30,14 @@ export type UpdateEnvioDto = {
   status?: 'RASCUNHO' | 'ENVIADO' | 'CANCELADO';
 };
 
+export type CreateEnvioDto = {
+  pep: string;
+  zvgp: string;
+  gerador: string;
+  observacoes: string | null;
+  status: 'RASCUNHO';
+};
+
 @Injectable()
 export class EnviosService {
   private readonly logger = new Logger(EnviosService.name);
@@ -50,6 +58,25 @@ export class EnviosService {
     } catch (err) {
       this.logger.error('list error:', err);
       throw new InternalServerErrorException('Failed to list envios.');
+    }
+  }
+
+  async create(dto: CreateEnvioDto) {
+    try {
+      const { rows } = await this.pool.query(
+        `INSERT INTO envios(pep, zvgp, gerador, observacoes, created_at, updated_at)
+      VALUES($1, $2, $3, $4, NOW(), NOW())
+      RETURNING id, pep, zvgp, gerador, observacoes, status,
+      to_char(created_at, 'YYYY-MM-DD"T"HH24:MI:SSZ') as created_at,
+      to_char(updated_at, 'YYYY-MM-DD"T"HH24:MI:SSZ') as updated_at
+    `,
+        [dto.pep, dto.zvgp, dto.gerador, dto.observacoes]
+      );
+
+      return rows[0];
+    } catch (err) {
+      this.logger.error('create error:', err);
+      throw new InternalServerErrorException('Failed to create envio.');
     }
   }
 

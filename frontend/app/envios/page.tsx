@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 import type { Envio } from '@/envios/types/envio';
 import EnvioRow from '@/envios/components/EnvioRow'
+import Link from 'next/link';
 
 async function getEnvios(): Promise<Envio[]> {
   const url = `${process.env.NEXT_PUBLIC_API_URL}/envios`;
@@ -36,6 +37,12 @@ export default async function EnviosPage() {
   return (
     <div className="max-w-8/10 m-auto">
       <h1 className="pb-4 pt-4 text-2xl font-bold">Envios</h1>
+      <Link
+        href="/envios/new"
+        className="mb-6 px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 inline-block"
+      >
+        Adicionar Envio
+      </Link>
       <div className='rounded-xl max-h-[calc(100vh-var(--spacing)*16)] overflow-y-auto'>
         <table className="w-full border border-gray-200 shadow-md">
           <thead className="sticky top-0 text-sm uppercase bg-gray-200">
