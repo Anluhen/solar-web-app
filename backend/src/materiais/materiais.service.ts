@@ -33,6 +33,25 @@ async get(id: number): Promise<Material | null> {
     return rows[0] ?? null;
   }
 
+  async create(dto: {
+    envio_id: number;
+    sap: string;
+    descricao: string;
+    quantidade: number;
+  }) {
+    const { rows } = await this.pool.query(
+      `INSERT INTO materiais(envio_id, sap, descricao, quantidade, created_at, updated_at)
+      VALUES($1, $2, $3, $4, NOW(), NOW())
+      RETURNING id, envio_id, sap, descricao, quantidade,
+      to_char(created_at, 'YYYY-MM-DD"T"HH24:MI:SSZ') as created_at,
+      to_char(updated_at, 'YYYY-MM-DD"T"HH24:MI:SSZ') as updated_at
+    `,
+      [dto.envio_id, dto.sap, dto.descricao, dto.quantidade]
+    );
+
+    return rows[0];
+  }
+  
   async update(id: number, dto: UpdateMaterialDto) {
     const allowedKeys: (keyof UpdateMaterialDto)[] = [
       'sap',

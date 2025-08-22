@@ -59,6 +59,7 @@ export default async function EnvioPage({ params }: { params: { id: string } }) 
         <MateriaisTable
           key={envio.id}
           materiais={materiais}
+          envioId={envio.id}
         />
       </div>
     </div>

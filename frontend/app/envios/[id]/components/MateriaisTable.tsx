@@ -1,12 +1,26 @@
 'use client'
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import type { Materiais, Material } from '@/envios/types/materiais';
 
-export default function MateriaisTable({ materiais }: { materiais: Materiais }) {
-  const [original, setOriginal] = useState<Materiais>(materiais);
-  const [form, setForm] = useState<Materiais>(materiais);
+type FormEntry = Omit<Material, 'created_at' | 'updated_at'> & {
+  created_at?: Material['created_at'];
+  updated_at?: Material['updated_at'];
+}
+
+type FormData = FormEntry[];
+
+export default function MateriaisTable({
+  materiais,
+  envioId,
+}: {
+  materiais: Materiais;
+  envioId: number;
+}) {
+  const [original, setOriginal] = useState<FormData>(materiais);
+  const [form, setForm] = useState<FormData>(materiais);
   const [saving, setSaving] = useState<Record<number, boolean>>({});
   const [deleting, setDeleting] = useState<Record<number, boolean>>({});
+  const tempId = useRef(-1);
 
   function handleChange(
     id: number,
@@ -20,37 +34,53 @@ export default function MateriaisTable({ materiais }: { materiais: Materiais }) 
     const a = form.find(m => m.id === id);
     const b = original.find(m => m.id === id);
 
-    if (!a || !b) return false
+    if (!a) return false;
+    if (!b) return true;
 
     return a.sap !== b.sap || a.descricao !== b.descricao || a.quantidade !== b.quantidade;
   }
 
-  async function saveRow(id:number) {
+  async function saveRow(id: number) {
     const row = form.find(m => m.id === id);
     if (!row) return;
 
+    const isNew = id < 0;
+
     try {
       setSaving(s => ({ ...s, [id]: true }));
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/materiais/${id}`, {
-        method: 'PUT',
+
+      const payload = {
+        envio_id: envioId,
+        sap: row.sap,
+        descricao: row.descricao,
+        quantidade: row.quantidade,
+      };
+
+      const res = await fetch(
+        isNew ? `${process.env.NEXT_PUBLIC_API_URL}/materiais/` : `${process.env.NEXT_PUBLIC_API_URL}/materiais/${id}`, {
+        method: isNew ? 'POST' : 'PUT',
         headers: { 'Content-Type': 'application/json' },
         cache: 'no-store',
-        body: JSON.stringify({
-          sap: row.sap,
-          descricao: row.descricao,
-          quantidade: row.quantidade,
-        }),
+        body: JSON.stringify(payload),
       });
+
       if (!res.ok) {
         const text = await res.text();
-        throw new Error(`PUT /materiais/${id}: ${res.status} ${res.text}`);
+        throw new Error(
+          `${isNew ? 'POST' : 'PUT'} /materiais${isNew ? '' : '/' + id}: ${res.status} ${text}`);
       }
-      const updated: Material = await res.json();
-    
-      setOriginal(prev => prev.map(m => (m.id === id ? updated : m)));
-      setForm(prev => prev.map(m => (m.id === id ? updated : m)));
+
+      const saved: Material = await res.json();
+
+      if (isNew) {
+        setForm(prev => prev.map(m => (m.id === id ? saved : m)));
+        setOriginal(prev => [...prev, saved]);
+      } else {
+        setForm(prev => prev.map(m => (m.id === id ? saved : m)));
+        setOriginal(prev => prev.map(m => (m.id === id ? saved : m)));
+      }
     } catch (err) {
-      console.log(err);
+      console.error(err);
       alert('Falha ao salvar material.');
     } finally {
       setSaving(s => ({ ...s, [id]: false }));
@@ -58,17 +88,27 @@ export default function MateriaisTable({ materiais }: { materiais: Materiais }) 
   }
 
   async function deleteRow(id: number) {
+    const isNew = id < 0;
     if (!confirm('Excluir este material?')) return;
+    
     try {
       setDeleting(d => ({ ...d, [id]: true }));
+      
+      if (isNew) {
+        setForm((prev) => prev.filter((m) => m.id !== id));
+        return;
+      }
+      
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/materiais/${id}`, {
         method: 'DELETE',
         cache: 'no-store',
       });
+
       if (!res.ok) {
         const text = await res.text();
         throw new Error(`DELETE /materiais/${id}: ${res.status} ${text}`);
       }
+
       setOriginal(prev => prev.filter(m => m.id !== id));
       setForm(prev => prev.filter(m => m.id !== id));
     } catch (err) {
@@ -77,6 +117,22 @@ export default function MateriaisTable({ materiais }: { materiais: Materiais }) 
     } finally {
       setDeleting(d => ({ ...d, [id]: false }));
     }
+  }
+
+  function addBlankRow() {
+    const nextTempId = tempId.current;
+    tempId.current -= 1;
+
+    setForm(prev => [
+      ...prev,
+      {
+        id: nextTempId,
+        envio_id: envioId,
+        sap: 0,
+        descricao: '',
+        quantidade: 0,
+      },
+    ]);
   }
 
   return (
@@ -146,6 +202,16 @@ export default function MateriaisTable({ materiais }: { materiais: Materiais }) 
             </tr>
           )
         })}
+        <tr>
+          <td colSpan={4} className="px-4 py-2 text-center">
+            <button
+              className="p-1 cursor-pointer font-extrabold text-green-600 hover:text-white hover:bg-green-600 hover:rounded"
+              onClick={addBlankRow}
+            >
+              + Adicionar Material
+            </button>
+          </td>
+        </tr>
       </tbody>
     </table>
   );

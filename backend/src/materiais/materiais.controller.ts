@@ -1,5 +1,12 @@
-import { Body, Controller, Delete, Param, ParseIntPipe, Put, Get } from '@nestjs/common';
+import { Body, Controller, Delete, Param, ParseIntPipe, Put, Get, Post } from '@nestjs/common';
 import { MateriaisService } from './materiais.service';
+
+class CreateMaterialDto {
+  envio_id: number;
+  sap: string;
+  descricao: string;
+  quantidade: number;
+}
 
 class UpdateMaterialDto {
   sap?: string;
@@ -19,6 +26,11 @@ export class MateriaisController {
     }
     return envio;
   }
+
+  @Post()
+  async create(@Body() dto: CreateMaterialDto) {
+    return this.service.create(dto);
+    }
 
   @Put(':id')
   async update(
