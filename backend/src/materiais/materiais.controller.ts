@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Param, ParseIntPipe, Put, Get, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Param, ParseIntPipe, Put, Get, Post, NotFoundException } from '@nestjs/common';
 import { MateriaisService } from './materiais.service';
 
 class CreateMaterialDto {
@@ -22,7 +22,7 @@ export class MateriaisController {
   async getById(@Param('id', ParseIntPipe) id: number) {
     const envio = await this.service.get(id);
     if (!envio) {
-      return { error: 'Not Found' };
+      throw new NotFoundException('Material not found.');
     }
     return envio;
   }
@@ -30,7 +30,7 @@ export class MateriaisController {
   @Post()
   async create(@Body() dto: CreateMaterialDto) {
     return this.service.create(dto);
-    }
+  }
 
   @Put(':id')
   async update(
@@ -39,16 +39,16 @@ export class MateriaisController {
   ) {
     const row = await this.service.update(id, dto);
     if (!row) {
-      return { error: 'Not Found' };
+      throw new NotFoundException('Material not found.');
     }
-    return row; // retorna o material atualizado
+    return row;
   }
 
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number) {
     const ok = await this.service.remove(id);
     if (!ok) {
-      return { error: 'Not Found' };
+      throw new NotFoundException('Material not found.');
     }
     return { ok: true };
   }

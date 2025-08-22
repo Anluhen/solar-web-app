@@ -1,4 +1,4 @@
-import { Inject, Injectable, BadRequestException } from '@nestjs/common';
+import { Inject, Injectable, BadRequestException, InternalServerErrorException, Logger } from '@nestjs/common';
 import type { Pool } from 'pg';
 
 export type Envio = {
@@ -32,6 +32,7 @@ export type UpdateEnvioDto = {
 
 @Injectable()
 export class EnviosService {
+  private readonly logger = new Logger(EnviosService.name);
   constructor(@Inject('PG') private readonly pool: Pool) { }
 
   async list(): Promise<Envio[]> {
@@ -47,8 +48,8 @@ export class EnviosService {
       const { rows } = await this.pool.query(sql);
       return rows;
     } catch (err) {
-      console.error('list error:', err);
-      throw err;
+      this.logger.error('list error:', err);
+      throw new InternalServerErrorException('Failed to list envios.');
     }
   }
 
@@ -64,8 +65,8 @@ export class EnviosService {
       );
       return rows[0] ?? null;
     } catch (err) {
-      console.error('get error:', err);
-      throw err;
+      this.logger.error('get error:', err);
+      throw new InternalServerErrorException('Failed to fetch envio.');
     }
   }
 
@@ -84,8 +85,8 @@ export class EnviosService {
       );
       return rows as Material[];
     } catch (err) {
-      console.error('getMateriais error:', err);
-      throw err;
+      this.logger.error('getMateriais error:', err);
+      throw new InternalServerErrorException('Failed to fetch materiais for envio.');
     }
   }
 
@@ -130,8 +131,8 @@ export class EnviosService {
       const { rows } = await this.pool.query(sql, values);
       return rows[0] ?? null;
     } catch (err) {
-      console.error('update error:', err);
-      throw err;
+      this.logger.error('update error:', err);
+      throw new InternalServerErrorException('Failed to update envio.');
     }
   }
 }

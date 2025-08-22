@@ -24,7 +24,7 @@ export class EnviosController {
   async getById(@Param('id', ParseIntPipe) id: number) {
     const envio = await this.service.get(id);
     if (!envio) {
-      return { error: 'Not Found' };
+      throw new NotFoundException('Envio not found.');
     }
     return envio;
   }
