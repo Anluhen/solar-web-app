@@ -35,7 +35,8 @@ export class EnviosService {
   constructor(@Inject('PG') private readonly pool: Pool) { }
 
   async list(): Promise<Envio[]> {
-    const sql = `
+    try {
+      const sql = `
       SELECT id, pep, zvgp, gerador, observacoes,  status,
              to_char(created_at, 'YYYY-MM-DD"T"HH24:MI:SSZ') as created_at,
              to_char(updated_at, 'YYYY-MM-DD"T"HH24:MI:SSZ') as updated_at
@@ -43,25 +44,34 @@ export class EnviosService {
       ORDER BY id ASC
       LIMIT 200
     `;
-    const { rows } = await this.pool.query(sql);
-    return rows;
+      const { rows } = await this.pool.query(sql);
+      return rows;
+    } catch (err) {
+      console.error('list error:', err);
+      throw err;
+    }
   }
 
   async get(id: number): Promise<Envio | null> {
-    const { rows } = await this.pool.query(
-      `SELECT id, pep, zvgp, gerador, observacoes,  status,
+    try {
+      const { rows } = await this.pool.query(
+        `SELECT id, pep, zvgp, gerador, observacoes,  status,
              to_char(created_at, 'YYYY-MM-DD"T"HH24:MI:SSZ') as created_at,
              to_char(updated_at, 'YYYY-MM-DD"T"HH24:MI:SSZ') as updated_at
       FROM envios
       WHERE id = $1`,
-      [id],
-    );
-    return rows[0] ?? null;
+        [id],
+      );
+      return rows[0] ?? null;
+    } catch (err) {
+      console.error('get error:', err);
+      throw err;
+    }
   }
 
   async getMateriais(envio_id: number): Promise<Material[] | null> {
     console.log('This is the envio_id: ', envio_id);
-    
+
     try {
       const { rows } = await this.pool.query(
         `SELECT id, envio_id, sap, descricao, quantidade,
@@ -80,34 +90,35 @@ export class EnviosService {
   }
 
   async update(id: number, dto: UpdateEnvioDto): Promise<Envio | null> {
-    const allowedKeys: (keyof UpdateEnvioDto)[] = [
-      'pep',
-      'zvgp',
-      'gerador',
-      'observacoes',
-      'status',
-    ];
+    try {
+      const allowedKeys: (keyof UpdateEnvioDto)[] = [
+        'pep',
+        'zvgp',
+        'gerador',
+        'observacoes',
+        'status',
+      ];
 
-    const setClauses: string[] = [];
-    const values: any[] = [];
-    let paramIndex = 1;
+      const setClauses: string[] = [];
+      const values: any[] = [];
+      let paramIndex = 1;
 
-    for (const key of allowedKeys) {
-      if (Object.prototype.hasOwnProperty.call(dto, key)) {
-        setClauses.push(`${key} = $${paramIndex++}`);
-        values.push((dto as any)[key]);
+      for (const key of allowedKeys) {
+        if (Object.prototype.hasOwnProperty.call(dto, key)) {
+          setClauses.push(`${key} = $${paramIndex++}`);
+          values.push((dto as any)[key]);
+        }
       }
-    }
 
-    if (setClauses.length === 0) {
-      throw new BadRequestException('No valid fields provided for update.');
-    }
+      if (setClauses.length === 0) {
+        throw new BadRequestException('No valid fields provided for update.');
+      }
 
-    setClauses.push(`updated_at = NOW()`);
+      setClauses.push(`updated_at = NOW()`);
 
-    values.push(id);
+      values.push(id);
 
-    const sql = `
+      const sql = `
       UPDATE envios
       SET ${setClauses.join(', ')}
       WHERE id = $${values.length}
@@ -116,7 +127,11 @@ export class EnviosService {
         to_char(updated_at, 'YYYY-MM-DD"T"HH24:MI:SSZ') as updated_at
     `;
 
-    const { rows } = await this.pool.query(sql, values);
-    return rows[0] ?? null;
+      const { rows } = await this.pool.query(sql, values);
+      return rows[0] ?? null;
+    } catch (err) {
+      console.error('update error:', err);
+      throw err;
+    }
   }
 }
