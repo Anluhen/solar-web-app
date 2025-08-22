@@ -12,6 +12,16 @@ export type Envio = {
   updated_at: string;
 };
 
+export type Material = {
+  id: number;
+  envio_id: number;
+  sap: number;
+  descricao: string;
+  quantidade: number;
+  created_at: string;
+  updated_at: string;
+};
+
 export type UpdateEnvioDto = {
   pep?: string;
   zvgp?: string;
@@ -49,16 +59,27 @@ export class EnviosService {
     return rows[0] ?? null;
   }
 
-  async update(id: number, dto: UpdateEnvioDto): Promise<Envio | null> {
-    // if (
-    //   dto.status !== undefined &&
-    //   !['RASCUNHO', 'ENVIADO', 'CANCELADO'].includes(dto.status)
-    // ) {
-    //   throw new BadRequestException(
-    //     'Invalid status. Use RASCUNHO | ENVIADO | CANCELADO.',
-    //   );
-    // }
+  async getMateriais(envio_id: number): Promise<Material[] | null> {
+    console.log('This is the envio_id: ', envio_id);
     
+    try {
+      const { rows } = await this.pool.query(
+        `SELECT id, envio_id, sap, descricao, quantidade,
+             to_char(created_at, 'YYYY-MM-DD"T"HH24:MI:SSZ') as created_at,
+             to_char(updated_at, 'YYYY-MM-DD"T"HH24:MI:SSZ') as updated_at
+      FROM materiais
+      WHERE envio_id = $1
+      ORDER BY id`,
+        [envio_id],
+      );
+      return rows as Material[];
+    } catch (err) {
+      console.error('getMateriais error:', err);
+      throw err;
+    }
+  }
+
+  async update(id: number, dto: UpdateEnvioDto): Promise<Envio | null> {
     const allowedKeys: (keyof UpdateEnvioDto)[] = [
       'pep',
       'zvgp',

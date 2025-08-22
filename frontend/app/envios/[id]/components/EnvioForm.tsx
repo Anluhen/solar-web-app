@@ -1,8 +1,6 @@
 'use client'
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import type { Envio } from '@/envios/types/envio';
-import { routerServerGlobal } from 'next/dist/server/lib/router-utils/router-server-context';
 
 interface InputFieldProps {
   name: string;
@@ -38,7 +36,6 @@ function InputField({
 }
 
 export default function EnvioForm({ envio }: { envio: Envio }) {
-  const router = useRouter();
   const [form, setForm] = useState({
     id: String(envio.id ?? ''),
     pep: String(envio.pep ?? ''),
@@ -147,7 +144,7 @@ export default function EnvioForm({ envio }: { envio: Envio }) {
       <div className="col-span-full">
         <button
           type="submit"
-          className="btn btn-primary px-4 py-2 rounded bg-blue-600 text-white"
+          className="px-4 py-2 rounded bg-blue-600 text-white"
         >
           Salvar
         </button>

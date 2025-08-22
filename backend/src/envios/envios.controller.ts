@@ -29,6 +29,15 @@ export class EnviosController {
     return envio;
   }
 
+  @Get(':id/materiais')
+  async getMateriais(@Param('id', ParseIntPipe) id: number) {
+    const materiais = await this.service.getMateriais(id);
+    if (!materiais?.length) {
+      throw new NotFoundException('Materials not found');
+    }
+    return materiais;
+  }
+
   @Put(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
