@@ -3,6 +3,7 @@ export interface Envio {
     pep: string;
     zvgp: string;
     gerador: string;
+    separacao: string;
     status: 'RASCUNHO' | 'ENVIADO' | 'CANCELADO';
     observacoes: string | null;
     created_at: string;

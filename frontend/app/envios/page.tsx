@@ -26,19 +26,6 @@ export default async function EnviosPage({ searchParams }: { searchParams: Promi
   
   const envios = await getEnvios(sp);
 
-  // Convert timezone to avoid hydration error
-  const fmt = new Intl.DateTimeFormat('pt-BR', {
-    timeZone: 'America/Sao_Paulo',
-    dateStyle: 'short',
-    timeStyle: 'short',
-  });
-
-  const rows = envios.map(e => ({
-    ...e,
-    created_at_fmt: fmt.format(new Date(e.created_at)),
-    updated_at_fmt: fmt.format(new Date(e.updated_at)),
-  }));
-
   return (
     <div className="max-w-8/10 m-auto">
       <h1 className="pb-4 pt-4 text-2xl font-bold">Envios</h1>
@@ -65,7 +52,7 @@ export default async function EnviosPage({ searchParams }: { searchParams: Promi
             </tr>
           </thead>
           <tbody className='text-sm'>
-            {rows.map((e) => (
+            {envios.map((e) => (
               <EnvioRow
                 key={e.id}
                 envio={e}

@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS envios (
   pep TEXT NOT NULL,
   zvgp TEXT NOT NULL,
   gerador TEXT NOT NULL,
+  separacao DATE NOT NULL,
   observacoes TEXT,
   status TEXT NOT NULL CHECK (status IN ('RASCUNHO','ENVIADO','CANCELADO')) DEFAULT 'RASCUNHO',  
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),

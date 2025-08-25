@@ -9,7 +9,6 @@ import MateriaisTable from './components/MateriaisTable';
 
 async function getEnvio(id: string): Promise<Envio> {
   const url = `${process.env.NEXT_PUBLIC_API_URL}/envios/${id}`;
-  console.log(url);
   const res = await fetch(url, {
     cache: 'no-store',
   });
@@ -22,7 +21,6 @@ async function getEnvio(id: string): Promise<Envio> {
 
 async function getMateriais(id: string): Promise<Materiais> {
   const url = `${process.env.NEXT_PUBLIC_API_URL}/envios/${id}/materiais`;
-  console.log(url);
   const res = await fetch(url, {
     cache: 'no-store',
   });
@@ -34,10 +32,12 @@ async function getMateriais(id: string): Promise<Materiais> {
 }
 
 export default async function EnvioPage({ params }: { params: { id: string } }) {
-  const isNew = params.id === 'new';
+  const p = await params;
+  
+  const isNew = p.id === 'new';
 
-  const envio = isNew ? undefined : await getEnvio(params.id);
-  const materiais = isNew ? undefined : await getMateriais(params.id);
+  const envio = isNew ? undefined : await getEnvio(p.id);
+  const materiais = isNew ? undefined : await getMateriais(p.id);
 
   return (
     <div className='p-4 w-screen m-auto'>

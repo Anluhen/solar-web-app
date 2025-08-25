@@ -13,6 +13,24 @@ interface InputFieldProps {
   className?: string;
 }
 
+function isoToBr(iso?: string | null): string {
+  if (!iso) return '';
+  // accept 'YYYY-MM-DD' or ISO datetime
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return iso; // fallback: show as-is
+  const [, y, mo, d] = m;
+  return `${d}/${mo}/${y}`;
+}
+
+function brToIso(br?: string | null): string | null {
+  if (!br) return null;
+  const m = br.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) return null;
+  const [, d, mo, y] = m;
+  // return date-only ISO (UTC‑agnostic), good for DATE columns
+  return `${y}-${mo}-${d}`;
+}
+
 function InputField({
   name,
   label,
@@ -53,6 +71,7 @@ export default function EnvioForm({
     pep: String(envio?.pep ?? ''),
     zvgp: String(envio?.zvgp ?? ''),
     gerador: String(envio?.gerador ?? ''),
+    separacao: isoToBr(envio?.separacao ?? ''),
     observacoes: String(envio?.observacoes ?? ''),
     status: String(envio?.status ?? ''),
     created_at: String(envio?.created_at ?? ''),
@@ -69,9 +88,12 @@ export default function EnvioForm({
       pep: fd.get('pep') || undefined,
       zvgp: fd.get('zvgp') || undefined,
       gerador: fd.get('gerador') || undefined,
+      separacao: brToIso((fd.get('separacao') as string | null) ?? '')?.trim() || undefined,
       observacoes: fd.get('observacoes') ?? undefined,
       status: fd.get('status') || undefined,
     };
+
+    console.log(payload.separacao);
 
     Object.keys(payload).forEach((k) => payload[k] === undefined && delete payload[k]);
 
@@ -100,6 +122,7 @@ export default function EnvioForm({
       ...f,
       ...saved,
       id: String(saved.id ?? f.id ?? ''),
+      separacao: isoToBr(saved.separacao ?? f.separacao ?? ''),
       created_at: String(saved.created_at ?? f.created_at ?? ''),
       updated_at: String(saved.updated_at ?? f.updated_at ?? ''),
     }));
@@ -163,6 +186,13 @@ export default function EnvioForm({
           <option value="CANCELADO">CANCELADO</option>
         </select>
       </div>
+      <InputField
+        name="separacao"
+        label="Data de Separação"
+        value={form.separacao}
+        onChange={handleChange}
+        className='sm:col-span-4'
+      />
       <InputField
         name="created_at"
         label="Criado em"

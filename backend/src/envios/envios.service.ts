@@ -6,6 +6,7 @@ export type Envio = {
   pep: string;
   zvgp: string;
   gerador: string;
+  separacao: string;
   observacoes: string | null;
   status: 'RASCUNHO' | 'ENVIADO' | 'CANCELADO';
   created_at: string;
@@ -26,6 +27,7 @@ export type UpdateEnvioDto = {
   pep?: string;
   zvgp?: string;
   gerador?: string;
+  separacao?: string;
   observacoes?: string | null;
   status?: 'RASCUNHO' | 'ENVIADO' | 'CANCELADO';
 };
@@ -34,6 +36,7 @@ export type CreateEnvioDto = {
   pep: string;
   zvgp: string;
   gerador: string;
+  separacao: string;
   observacoes: string | null;
   status: 'RASCUNHO';
 };
@@ -88,8 +91,9 @@ export class EnviosService {
       const sql = `
         SELECT
           e.id, e.pep, e.zvgp, e.gerador, e.observacoes, e.status,
-          to_char(e.created_at, 'YYYY-MM-DD"T"HH24:MI:SSZ') AS created_at,
-          to_char(e.updated_at, 'YYYY-MM-DD"T"HH24:MI:SSZ') AS updated_at
+          to_char(e.separacao, 'DD/MM/YYYY') as separacao,
+          to_char(e.created_at, 'DD/MM/YYYY" "HH24"h":MI"m":SS"s"') AS created_at,
+          to_char(e.updated_at, 'DD/MM/YYYY" "HH24"h":MI"m":SS"s"') AS updated_at
         FROM envios e
         ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
         ORDER BY e.${orderBy} ${orderDir}
@@ -107,13 +111,14 @@ export class EnviosService {
   async create(dto: CreateEnvioDto) {
     try {
       const { rows } = await this.pool.query(
-        `INSERT INTO envios(pep, zvgp, gerador, observacoes, created_at, updated_at)
-      VALUES($1, $2, $3, $4, NOW(), NOW())
+        `INSERT INTO envios(pep, zvgp, gerador, separacao, observacoes, created_at, updated_at)
+      VALUES($1, $2, $3, $4, $5, NOW(), NOW())
       RETURNING id, pep, zvgp, gerador, observacoes, status,
-      to_char(created_at, 'YYYY-MM-DD"T"HH24:MI:SSZ') as created_at,
-      to_char(updated_at, 'YYYY-MM-DD"T"HH24:MI:SSZ') as updated_at
+      to_char(separacao, 'DD/MM/YYYY') as separacao,
+      to_char(created_at, 'DD/MM/YYYY" "HH24"h":MI"m":SS"s"') as created_at,
+      to_char(updated_at, 'DD/MM/YYYY" "HH24"h":MI"m":SS"s"') as updated_at
     `,
-        [dto.pep, dto.zvgp, dto.gerador, dto.observacoes]
+        [dto.pep, dto.zvgp, dto.gerador, dto.separacao, dto.observacoes]
       );
 
       return rows[0];
@@ -127,8 +132,9 @@ export class EnviosService {
     try {
       const { rows } = await this.pool.query(
         `SELECT id, pep, zvgp, gerador, observacoes,  status,
-             to_char(created_at, 'YYYY-MM-DD"T"HH24:MI:SSZ') as created_at,
-             to_char(updated_at, 'YYYY-MM-DD"T"HH24:MI:SSZ') as updated_at
+             to_char(separacao, 'DD/MM/YYYY') as separacao,
+             to_char(created_at, 'DD/MM/YYYY" "HH24"h":MI"m":SS"s"') as created_at,
+             to_char(updated_at, 'DD/MM/YYYY" "HH24"h":MI"m":SS"s"') as updated_at
       FROM envios
       WHERE id = $1`,
         [id],
@@ -141,13 +147,11 @@ export class EnviosService {
   }
 
   async getMateriais(envio_id: number): Promise<Material[] | null> {
-    console.log('This is the envio_id: ', envio_id);
-
     try {
       const { rows } = await this.pool.query(
         `SELECT id, envio_id, sap, descricao, quantidade,
-             to_char(created_at, 'YYYY-MM-DD"T"HH24:MI:SSZ') as created_at,
-             to_char(updated_at, 'YYYY-MM-DD"T"HH24:MI:SSZ') as updated_at
+             to_char(created_at, 'DD/MM/YYYY" "HH24"h":MI"m":SS"s"') as created_at,
+             to_char(updated_at, 'DD/MM/YYYY" "HH24"h":MI"m":SS"s"') as updated_at
       FROM materiais
       WHERE envio_id = $1
       ORDER BY id`,
@@ -166,6 +170,7 @@ export class EnviosService {
         'pep',
         'zvgp',
         'gerador',
+        'separacao',
         'observacoes',
         'status',
       ];
@@ -194,8 +199,9 @@ export class EnviosService {
       SET ${setClauses.join(', ')}
       WHERE id = $${values.length}
       RETURNING id, pep, zvgp, gerador, observacoes, status,
-        to_char(created_at, 'YYYY-MM-DD"T"HH24:MI:SSZ') as created_at,
-        to_char(updated_at, 'YYYY-MM-DD"T"HH24:MI:SSZ') as updated_at
+        to_char(separacao, 'DD/MM/YYYY') as separacao,
+        to_char(created_at, 'DD/MM/YYYY" "HH24"h":MI"m":SS"s"') as created_at,
+        to_char(updated_at, 'DD/MM/YYYY" "HH24"h":MI"m":SS"s"') as updated_at
     `;
 
       const { rows } = await this.pool.query(sql, values);
