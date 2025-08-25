@@ -1,14 +1,17 @@
 export const dynamic = 'force-dynamic';
 import type { Envio } from '@/envios/types/envio';
-import EnvioRow from '@/envios/components/EnvioRow'
+import type { SearchParams } from '@/envios/types/SearchParams';
+import EnvioRow from '@/envios/components/EnvioRow';
+import SearchForm from '@/envios/components/SearchForm';
 import Link from 'next/link';
 
-async function getEnvios(): Promise<Envio[]> {
-  const url = `${process.env.NEXT_PUBLIC_API_URL}/envios`;
-  const res = await fetch(url, {
-    // If API is on a different origin, cookies aren't needed:
-    // credentials: 'include',
-    // Ensure no caching during dev:
+async function getEnvios(params: SearchParams): Promise<Envio[]> {
+  const url = new URL(`${process.env.NEXT_PUBLIC_API_URL}/envios`);
+  Object.entries(params ?? {}).forEach(([k, v]) => {
+    if (v !== undefined && v !== '') url.searchParams.set(k, v);
+  });
+
+  const res = await fetch(url.toString(), {
     cache: 'no-store',
   });
   if (!res.ok) {
@@ -18,8 +21,10 @@ async function getEnvios(): Promise<Envio[]> {
   return res.json();
 }
 
-export default async function EnviosPage() {
-  const envios = await getEnvios();
+export default async function EnviosPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const sp = await searchParams
+  
+  const envios = await getEnvios(sp);
 
   // Convert timezone to avoid hydration error
   const fmt = new Intl.DateTimeFormat('pt-BR', {
@@ -39,11 +44,16 @@ export default async function EnviosPage() {
       <h1 className="pb-4 pt-4 text-2xl font-bold">Envios</h1>
       <Link
         href="/envios/new"
-        className="mb-6 px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 inline-block"
+        className="mb-2 px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 inline-block"
       >
         Adicionar Envio
       </Link>
-      <div className='rounded-xl max-h-[calc(100vh-var(--spacing)*16)] overflow-y-auto'>
+
+      <SearchForm
+        searchParams={sp}
+      />
+
+      <div className='rounded-xl max-h-[calc(100vh-var(--spacing)*43)] overflow-y-auto'>
         <table className="w-full border border-gray-200 shadow-md">
           <thead className="sticky top-0 text-sm uppercase bg-gray-200">
             <tr>
@@ -52,9 +62,6 @@ export default async function EnviosPage() {
               <th className="p-2 text-left">ZVGP</th>
               <th className="p-2 text-left">Gerador</th>
               <th className="p-2 text-left">Status</th>
-              {/* <th className="p-2 text-left border border-gray-400">Observações</th> */}
-              {/* <th className="p-2 text-left border border-gray-400">Criado</th> */}
-              {/* <th className="p-2 text-left border border-gray-400">Atualizado</th> */}
             </tr>
           </thead>
           <tbody className='text-sm'>

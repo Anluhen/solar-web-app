@@ -8,17 +8,46 @@ import {
   Post,
   BadRequestException,
   NotFoundException,
+  Query,
 } from '@nestjs/common';
 import { EnviosService } from './envios.service';
 import type { UpdateEnvioDto, CreateEnvioDto } from './envios.service';
+
+class ListEnviosQueryDto {
+  id?: string;        // number-ish (kept string to validate/parse ourselves)
+  pep?: string;
+  zvgp?: string;
+  gerador?: string;
+  limit?: string;     // strings in query, convert below
+  offset?: string;
+  orderBy?: 'created_at' | 'updated_at' | 'id';
+  orderDir?: 'asc' | 'desc';
+}
 
 @Controller('envios')
 export class EnviosController {
   constructor(private readonly service: EnviosService) { }
 
   @Get()
-  async list() {
-    return await this.service.list();
+  async list(@Query() q: ListEnviosQueryDto) {
+    // normalize + validate
+    const id = q.id ? Number(q.id) : undefined;
+    if (q.id && Number.isNaN(id)) {
+      throw new BadRequestException('id must be a number');
+    }
+
+    const limit = q.limit ? Math.min(Math.max(Number(q.limit), 1), 200) : 50;
+    const offset = q.offset ? Math.max(Number(q.offset), 0) : 0;
+    const orderBy = q.orderBy ?? 'id';
+    const orderDir = (q.orderDir ?? 'asc').toLowerCase() === 'desc' ? 'desc' : 'asc';
+
+    return this.service.list({
+      id,
+      pep: q.pep?.trim(),
+      zvgp: q.zvgp?.trim(),
+      gerador: q.gerador?.trim(),
+      limit, offset, orderBy, orderDir,
+    });
   }
 
   @Post()

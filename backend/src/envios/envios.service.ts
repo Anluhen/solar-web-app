@@ -38,22 +38,65 @@ export type CreateEnvioDto = {
   status: 'RASCUNHO';
 };
 
+type ListFilters = {
+  id?: number;
+  pep?: string;
+  zvgp?: string;
+  gerador?: string;
+  limit: number;
+  offset: number;
+  orderBy: 'created_at' | 'updated_at' | 'id';
+  orderDir: 'asc' | 'desc';
+};
+
+
 @Injectable()
 export class EnviosService {
   private readonly logger = new Logger(EnviosService.name);
   constructor(@Inject('PG') private readonly pool: Pool) { }
 
-  async list(): Promise<Envio[]> {
+  async list(filters: ListFilters) {
     try {
+      const where: string[] = [];
+      const params: any[] = [];
+
+      if (filters.id !== undefined) {
+        params.push(filters.id);
+        where.push(`e.id = $${params.length}`);
+      }
+      if (filters.pep) {
+        params.push(`%${filters.pep}%`);                 // prefix match (index-friendly)
+        where.push(`e.pep ILIKE $${params.length}`);
+      }
+      if (filters.zvgp) {
+        params.push(`%${filters.zvgp}%`);
+        where.push(`e.zvgp ILIKE $${params.length}`);
+      }
+      if (filters.gerador) {
+        params.push(`%${filters.gerador}%`);
+        where.push(`e.gerador ILIKE $${params.length}`);
+      }
+
+      const orderBy = ['created_at', 'updated_at', 'id'].includes(filters.orderBy) ? filters.orderBy : 'id';
+      const orderDir = filters.orderDir === 'asc' ? 'asc' : 'desc';
+
+      params.push(filters.limit);
+      const limitIdx = params.length;
+      params.push(filters.offset);
+      const offsetIdx = params.length;
+
       const sql = `
-      SELECT id, pep, zvgp, gerador, observacoes,  status,
-             to_char(created_at, 'YYYY-MM-DD"T"HH24:MI:SSZ') as created_at,
-             to_char(updated_at, 'YYYY-MM-DD"T"HH24:MI:SSZ') as updated_at
-      FROM envios
-      ORDER BY id ASC
-      LIMIT 200
-    `;
-      const { rows } = await this.pool.query(sql);
+        SELECT
+          e.id, e.pep, e.zvgp, e.gerador, e.observacoes, e.status,
+          to_char(e.created_at, 'YYYY-MM-DD"T"HH24:MI:SSZ') AS created_at,
+          to_char(e.updated_at, 'YYYY-MM-DD"T"HH24:MI:SSZ') AS updated_at
+        FROM envios e
+        ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
+        ORDER BY e.${orderBy} ${orderDir}
+        LIMIT $${limitIdx} OFFSET $${offsetIdx}
+      `;
+
+      const { rows } = await this.pool.query(sql, params);
       return rows;
     } catch (err) {
       this.logger.error('list error:', err);
